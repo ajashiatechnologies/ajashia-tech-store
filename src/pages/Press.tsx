@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { Newspaper, Download, Mail, Shield } from "lucide-react";
+import logo from "../assets/logo.png";
 
 const facts = [
   { label: "Legal Name", value: "Ajashia Technologies" },
@@ -110,11 +111,9 @@ const Press = () => (
                 className={`p-8 rounded-2xl border ${variant.bg} flex flex-col items-center justify-center gap-3`}
               >
                 <div className="flex items-center gap-2">
-                  <img
-                    src="razorpay-webhook-server/assets/logo.png"
-                    alt="Ajashia"
-                    className="h-10 w-10 object-contain rounded-xl"
-                  />
+                  <img src={logo} 
+              alt="Ajashia"
+                className="h-10 w-10 object-contain rounded-xl"/>
                   <div className="flex flex-col">
                     <span className={`text-lg font-bold ${variant.textColor}`}>Ajashia</span>
                     <span className="text-[10px] text-muted-foreground -mt-1 tracking-wider">TECH STORE</span>

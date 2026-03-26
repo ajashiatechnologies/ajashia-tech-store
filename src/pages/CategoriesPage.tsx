@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
-import { Cpu, Radio, Wifi, Zap, Thermometer, Camera, Gauge, Lightbulb, ArrowRight } from "lucide-react";
+import { Cpu, Radio, Wifi, Zap, Thermometer, Camera, Gauge, Lightbulb, ArrowRight, Wrench } from "lucide-react";
 
 const categories = [
   {
@@ -11,7 +11,7 @@ const categories = [
     description: "Official Arduino boards and compatible development kits for prototyping and production.",
     icon: Cpu,
     color: "from-blue-500 to-cyan-400",
-    products: 156,
+    firstProject: "Build a digital clock",
     featured: ["Arduino Uno R3", "Arduino Mega 2560", "Arduino Nano"],
   },
   {
@@ -20,7 +20,7 @@ const categories = [
     description: "Temperature, humidity, motion, distance, and environmental sensors for IoT applications.",
     icon: Thermometer,
     color: "from-green-500 to-emerald-400",
-    products: 234,
+    firstProject: "Build a weather station",
     featured: ["DHT22", "PIR Motion", "HC-SR04 Ultrasonic"],
   },
   {
@@ -29,7 +29,7 @@ const categories = [
     description: "WiFi, Bluetooth, LoRa, and RF modules for wireless communication projects.",
     icon: Wifi,
     color: "from-purple-500 to-pink-400",
-    products: 89,
+    firstProject: "Control an LED from your phone",
     featured: ["ESP32", "ESP8266", "nRF24L01"],
   },
   {
@@ -38,7 +38,7 @@ const categories = [
     description: "LCD screens, OLED displays, LED strips, and indicator lights for visual output.",
     icon: Lightbulb,
     color: "from-yellow-500 to-orange-400",
-    products: 112,
+    firstProject: "Make a scrolling text badge",
     featured: ["16x2 LCD", "0.96\" OLED", "WS2812B LED Strip"],
   },
   {
@@ -47,7 +47,7 @@ const categories = [
     description: "DC motors, stepper motors, servos, and motor driver modules for robotics.",
     icon: Gauge,
     color: "from-red-500 to-rose-400",
-    products: 78,
+    firstProject: "Build a mini robot car",
     featured: ["SG90 Servo", "L298N Driver", "NEMA 17 Stepper"],
   },
   {
@@ -56,7 +56,7 @@ const categories = [
     description: "Batteries, power modules, voltage regulators, and charging circuits.",
     icon: Zap,
     color: "from-amber-500 to-yellow-400",
-    products: 65,
+    firstProject: "Make a solar phone charger",
     featured: ["LM7805", "18650 Battery", "Buck Converter"],
   },
   {
@@ -65,7 +65,7 @@ const categories = [
     description: "UART, I2C, SPI modules, and serial communication interfaces.",
     icon: Radio,
     color: "from-indigo-500 to-blue-400",
-    products: 43,
+    firstProject: "Log sensor data to a PC",
     featured: ["FT232 USB-Serial", "Logic Analyzer", "CAN Bus Module"],
   },
   {
@@ -74,7 +74,7 @@ const categories = [
     description: "Camera modules, image sensors, and computer vision accessories.",
     icon: Camera,
     color: "from-teal-500 to-cyan-400",
-    products: 28,
+    firstProject: "Build a motion-triggered camera",
     featured: ["OV7670", "Raspberry Pi Camera", "Thermal Camera"],
   },
 ];
@@ -94,7 +94,6 @@ const CategoriesPage = () => {
               className="text-center max-w-3xl mx-auto"
             >
               <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-6 leading-normal">
-
                 Browse by <span className="text-gradient">Category</span>
               </h1>
               <p className="text-lg text-muted-foreground">
@@ -147,10 +146,13 @@ const CategoriesPage = () => {
 
                       {/* Footer */}
                       <div className="flex items-center justify-between pt-4 border-t border-border">
-                        <span className="text-sm text-muted-foreground">
-                          {category.products} products
-                        </span>
-                        <ArrowRight className="w-5 h-5 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <Wrench className="w-3.5 h-3.5 text-primary shrink-0" />
+                          <span className="text-xs text-muted-foreground group-hover:text-primary transition-colors truncate">
+                            {category.firstProject}
+                          </span>
+                        </div>
+                        <ArrowRight className="w-5 h-5 text-primary opacity-0 group-hover:opacity-100 transition-opacity shrink-0 ml-2" />
                       </div>
                     </div>
                   </Link>

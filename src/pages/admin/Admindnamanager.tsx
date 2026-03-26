@@ -4,11 +4,12 @@ import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import {
   Network, Plus, Trash2, Search, ChevronDown,
-  Zap, BookOpen, Tag, X, Youtube, Package,
-  AlertTriangle, CheckCircle2, ArrowRight, Info
+  BookOpen, X, Youtube,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+
+const BACKEND_URL = "http://localhost:4000";
 
 type Product = { id: string; name: string; image_url: string; price: number; };
 type DnaRow  = { id: string; related_product: Product; relationship_type: string; reason: string; sort_order: number; };
@@ -28,14 +29,12 @@ const AdminDNAManager = () => {
   const [tab, setTab] = useState<"dna"|"projects">("dna");
   const [products, setProducts] = useState<Product[]>([]);
 
-  // DNA state
   const [dnaSearch, setDnaSearch] = useState("");
   const [dnaResults, setDnaResults] = useState<Product[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [dnaRows, setDnaRows] = useState<DnaRow[]>([]);
   const [loadingDna, setLoadingDna] = useState(false);
 
-  // Add DNA form
   const [relSearch, setRelSearch] = useState("");
   const [relResults, setRelResults] = useState<Product[]>([]);
   const [relProduct, setRelProduct] = useState<Product | null>(null);
@@ -43,14 +42,12 @@ const AdminDNAManager = () => {
   const [relReason, setRelReason] = useState("");
   const [savingDna, setSavingDna] = useState(false);
 
-  // Projects state
   const [projects, setProjects] = useState<Project[]>([]);
   const [loadingProjects, setLoadingProjects] = useState(false);
   const [showProjectForm, setShowProjectForm] = useState(false);
   const [projForm, setProjForm] = useState({ name:"", description:"", difficulty:"beginner", youtube_query:"" });
   const [savingProject, setSavingProject] = useState(false);
 
-  // Project component add
   const [expandedProject, setExpandedProject] = useState<string|null>(null);
   const [compSearch, setCompSearch] = useState("");
   const [compResults, setCompResults] = useState<Product[]>([]);
@@ -59,6 +56,7 @@ const AdminDNAManager = () => {
   const [compQty, setCompQty] = useState(1);
   const [savingComp, setSavingComp] = useState(false);
 
+  // Load products from Supabase (read-only, anon key fine for reading)
   useEffect(() => {
     supabase.from("products").select("id,name,image_url,price").then(({ data }) => { if (data) setProducts(data); });
   }, []);
@@ -75,24 +73,17 @@ const AdminDNAManager = () => {
 
   const fetchDna = async (productId: string) => {
     setLoadingDna(true);
-    const { data } = await supabase.from("component_dna")
-      .select(`id, relationship_type, reason, sort_order, related_product:products!component_dna_related_product_id_fkey(id,name,image_url,price)`)
-      .eq("product_id", productId).order("sort_order");
-    if (data) setDnaRows(data as any);
+    const res = await fetch(`${BACKEND_URL}/dna/${productId}`);
+    const data = await res.json();
+    if (res.ok) setDnaRows(data);
     setLoadingDna(false);
   };
 
   const fetchProjects = async () => {
     setLoadingProjects(true);
-    const { data: projs } = await supabase.from("product_projects").select("*").order("created_at", { ascending: false });
-    if (!projs) { setLoadingProjects(false); return; }
-    const enriched = await Promise.all(projs.map(async proj => {
-      const { data: comps } = await supabase.from("project_components")
-        .select(`id, is_required, quantity, product:products(id,name,image_url,price)`)
-        .eq("project_id", proj.id);
-      return { ...proj, components: comps || [] };
-    }));
-    setProjects(enriched as any);
+    const res = await fetch(`${BACKEND_URL}/projects`);
+    const data = await res.json();
+    if (res.ok) setProjects(data);
     setLoadingProjects(false);
   };
 
@@ -106,15 +97,20 @@ const AdminDNAManager = () => {
     if (!selectedProduct || !relProduct) return toast.error("Select both products");
     if (selectedProduct.id === relProduct.id) return toast.error("Cannot relate a product to itself");
     setSavingDna(true);
-    const { error } = await supabase.from("component_dna").insert({
-      product_id: selectedProduct.id,
-      related_product_id: relProduct.id,
-      relationship_type: relType,
-      reason: relReason.trim() || null,
-      sort_order: dnaRows.length,
+    const res = await fetch(`${BACKEND_URL}/dna`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        product_id: selectedProduct.id,
+        related_product_id: relProduct.id,
+        relationship_type: relType,
+        reason: relReason.trim() || null,
+        sort_order: dnaRows.length,
+      }),
     });
-    if (error) {
-      error.code === "23505" ? toast.error("This relationship already exists") : toast.error("Failed to add relationship");
+    const data = await res.json();
+    if (!res.ok) {
+      toast.error(data.error || "Failed to add relationship");
     } else {
       toast.success("Relationship added!");
       setRelProduct(null); setRelReason(""); setRelType("required");
@@ -124,7 +120,7 @@ const AdminDNAManager = () => {
   };
 
   const handleDeleteDna = async (id: string) => {
-    await supabase.from("component_dna").delete().eq("id", id);
+    await fetch(`${BACKEND_URL}/dna/${id}`, { method: "DELETE" });
     if (selectedProduct) fetchDna(selectedProduct.id);
     toast.success("Relationship removed");
   };
@@ -132,24 +128,26 @@ const AdminDNAManager = () => {
   const handleCreateProject = async () => {
     if (!projForm.name.trim()) return toast.error("Project name required");
     setSavingProject(true);
-    const { error } = await supabase.from("product_projects").insert({
-      name: projForm.name.trim(),
-      description: projForm.description.trim() || null,
-      difficulty: projForm.difficulty,
-      youtube_query: projForm.youtube_query.trim() || null,
+    const res = await fetch(`${BACKEND_URL}/projects`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(projForm),
     });
-    if (!error) {
+    if (res.ok) {
       toast.success("Project created!");
       setProjForm({ name:"", description:"", difficulty:"beginner", youtube_query:"" });
       setShowProjectForm(false);
       fetchProjects();
-    } else toast.error("Failed to create project");
+    } else {
+      const data = await res.json();
+      toast.error(data.error || "Failed to create project");
+    }
     setSavingProject(false);
   };
 
   const handleDeleteProject = async (id: string) => {
     if (!confirm("Delete this project?")) return;
-    await supabase.from("product_projects").delete().eq("id", id);
+    await fetch(`${BACKEND_URL}/projects/${id}`, { method: "DELETE" });
     fetchProjects();
     toast.success("Project deleted");
   };
@@ -157,11 +155,14 @@ const AdminDNAManager = () => {
   const handleAddComponent = async (projectId: string) => {
     if (!compProduct) return toast.error("Select a product");
     setSavingComp(true);
-    const { error } = await supabase.from("project_components").insert({
-      project_id: projectId, product_id: compProduct.id, is_required: compRequired, quantity: compQty,
+    const res = await fetch(`${BACKEND_URL}/projects/${projectId}/components`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ product_id: compProduct.id, is_required: compRequired, quantity: compQty }),
     });
-    if (error) {
-      error.code === "23505" ? toast.error("Already added to this project") : toast.error("Failed to add component");
+    const data = await res.json();
+    if (!res.ok) {
+      toast.error(data.error || "Failed to add component");
     } else {
       toast.success("Component added!");
       setCompProduct(null); setCompSearch(""); setCompQty(1); setCompRequired(true);
@@ -171,24 +172,21 @@ const AdminDNAManager = () => {
   };
 
   const handleRemoveComponent = async (id: string) => {
-    await supabase.from("project_components").delete().eq("id", id);
+    await fetch(`${BACKEND_URL}/projects/components/${id}`, { method: "DELETE" });
     fetchProjects();
     toast.success("Component removed");
   };
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-white mb-1 flex items-center gap-2">
-            <Network className="w-6 h-6 text-purple-400" /> Seyal DNA Manager
-          </h1>
-          <p className="text-sm text-white/50">Map component relationships and manage project templates.</p>
-        </div>
+      <div>
+        <h1 className="text-2xl font-bold text-white mb-1 flex items-center gap-2">
+          <Network className="w-6 h-6 text-purple-400" /> Seyal DNA Manager
+        </h1>
+        <p className="text-sm text-white/50">Map component relationships and manage project templates.</p>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-2 border-b border-white/10 pb-0">
+      <div className="flex gap-2 border-b border-white/10">
         {[{ id:"dna", label:"Component DNA", icon:<Network className="w-4 h-4"/> }, { id:"projects", label:"Projects", icon:<BookOpen className="w-4 h-4"/> }].map(t => (
           <button key={t.id} onClick={() => setTab(t.id as any)}
             className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${tab === t.id ? "border-purple-500 text-purple-300" : "border-transparent text-white/40 hover:text-white"}`}>
@@ -198,12 +196,9 @@ const AdminDNAManager = () => {
       </div>
 
       <AnimatePresence mode="wait">
-
-        {/* ── DNA TAB ── */}
         {tab === "dna" && (
           <motion.div key="dna" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
-
-            {/* Step 1: Pick base product */}
+            {/* Step 1 */}
             <div className="bg-[#111118] border border-white/10 rounded-2xl p-5">
               <p className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
                 <span className="w-6 h-6 rounded-full bg-purple-500/20 text-purple-300 text-xs flex items-center justify-center font-bold">1</span>
@@ -243,15 +238,13 @@ const AdminDNAManager = () => {
 
             {selectedProduct && (
               <>
-                {/* Step 2: Add relationship */}
+                {/* Step 2 */}
                 <div className="bg-[#111118] border border-white/10 rounded-2xl p-5 space-y-4">
                   <p className="text-sm font-semibold text-white flex items-center gap-2">
                     <span className="w-6 h-6 rounded-full bg-purple-500/20 text-purple-300 text-xs flex items-center justify-center font-bold">2</span>
                     Add Relationship
                   </p>
-
                   <div className="grid md:grid-cols-2 gap-4">
-                    {/* Related product search */}
                     <div>
                       <label className="text-xs text-white/50 mb-1.5 block">Related Product</label>
                       <div className="relative">
@@ -276,8 +269,6 @@ const AdminDNAManager = () => {
                         </AnimatePresence>
                       </div>
                     </div>
-
-                    {/* Relationship type */}
                     <div>
                       <label className="text-xs text-white/50 mb-1.5 block">Relationship Type</label>
                       <div className="grid grid-cols-2 gap-2">
@@ -292,56 +283,48 @@ const AdminDNAManager = () => {
                       </div>
                     </div>
                   </div>
-
-                  {/* Reason */}
                   <div>
                     <label className="text-xs text-white/50 mb-1.5 block">Reason <span className="opacity-50">(optional — shown to users)</span></label>
                     <Input value={relReason} onChange={e => setRelReason(e.target.value)}
                       placeholder="e.g. Needs 5V regulated power to operate safely"
                       className="bg-[#0B0B0F] border-white/10 text-white placeholder:text-white/30" />
                   </div>
-
-                  <Button onClick={handleAddDna} disabled={savingDna || !relProduct}
-                    className="gradient-primary text-white gap-2">
-                    <Plus className="w-4 h-4" />
-                    {savingDna ? "Adding…" : "Add Relationship"}
+                  <Button onClick={handleAddDna} disabled={savingDna || !relProduct} className="gradient-primary text-white gap-2">
+                    <Plus className="w-4 h-4" />{savingDna ? "Adding…" : "Add Relationship"}
                   </Button>
                 </div>
 
-                {/* Step 3: Existing relationships */}
+                {/* Step 3 */}
                 <div className="bg-[#111118] border border-white/10 rounded-2xl overflow-hidden">
                   <div className="flex items-center gap-2 px-5 py-3 border-b border-white/10">
                     <span className="w-6 h-6 rounded-full bg-purple-500/20 text-purple-300 text-xs flex items-center justify-center font-bold">3</span>
                     <span className="text-sm font-semibold text-white">Current Relationships</span>
                     <span className="ml-auto text-xs text-white/30">{dnaRows.length} mapped</span>
                   </div>
-
                   {loadingDna ? (
                     <div className="text-center py-8 text-white/30 text-sm">Loading…</div>
                   ) : dnaRows.length === 0 ? (
                     <div className="text-center py-8 text-white/30 text-sm">No relationships yet for this product.</div>
-                  ) : (
-                    dnaRows.map(row => {
-                      const rtMeta = REL_TYPES.find(r => r.value === row.relationship_type);
-                      return (
-                        <div key={row.id} className="flex items-center gap-4 px-5 py-3.5 border-b border-white/5 last:border-0 hover:bg-white/3 transition-colors">
-                          <img src={row.related_product.image_url} alt="" className="w-10 h-10 rounded-lg object-cover" />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm text-white font-medium truncate">{row.related_product.name}</p>
-                            {row.reason && <p className="text-xs text-white/40 truncate">{row.reason}</p>}
-                          </div>
-                          <span className="text-xs px-2 py-1 rounded-lg font-medium shrink-0"
-                            style={{ color: rtMeta?.color, background: `${rtMeta?.color}18` }}>
-                            {rtMeta?.label}
-                          </span>
-                          <button onClick={() => handleDeleteDna(row.id)}
-                            className="p-1.5 rounded-lg text-white/30 hover:text-red-400 hover:bg-red-400/10 transition-colors">
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                  ) : dnaRows.map(row => {
+                    const rtMeta = REL_TYPES.find(r => r.value === row.relationship_type);
+                    return (
+                      <div key={row.id} className="flex items-center gap-4 px-5 py-3.5 border-b border-white/5 last:border-0 hover:bg-white/3 transition-colors">
+                        <img src={row.related_product.image_url} alt="" className="w-10 h-10 rounded-lg object-cover" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-white font-medium truncate">{row.related_product.name}</p>
+                          {row.reason && <p className="text-xs text-white/40 truncate">{row.reason}</p>}
                         </div>
-                      );
-                    })
-                  )}
+                        <span className="text-xs px-2 py-1 rounded-lg font-medium shrink-0"
+                          style={{ color: rtMeta?.color, background: `${rtMeta?.color}18` }}>
+                          {rtMeta?.label}
+                        </span>
+                        <button onClick={() => handleDeleteDna(row.id)}
+                          className="p-1.5 rounded-lg text-white/30 hover:text-red-400 hover:bg-red-400/10 transition-colors">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    );
+                  })}
                 </div>
               </>
             )}
@@ -355,11 +338,8 @@ const AdminDNAManager = () => {
           </motion.div>
         )}
 
-        {/* ── PROJECTS TAB ── */}
         {tab === "projects" && (
           <motion.div key="projects" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
-
-            {/* Create project */}
             <div className="flex items-center justify-between">
               <p className="text-sm text-white/50">{projects.length} project{projects.length !== 1 ? "s" : ""} total</p>
               <Button onClick={() => setShowProjectForm(!showProjectForm)} className="gap-2 gradient-primary text-white">
@@ -406,7 +386,6 @@ const AdminDNAManager = () => {
                           placeholder="e.g. Arduino weather station DHT11 tutorial"
                           className="bg-[#0B0B0F] border-white/10 text-white placeholder:text-white/30 pl-10" />
                       </div>
-                      <p className="text-[11px] text-white/30 mt-1">This will be used as a YouTube search link — no hallucinated URLs.</p>
                     </div>
                   </div>
                   <Button onClick={handleCreateProject} disabled={savingProject} className="gradient-primary text-white gap-2">
@@ -416,7 +395,6 @@ const AdminDNAManager = () => {
               )}
             </AnimatePresence>
 
-            {/* Projects list */}
             {loadingProjects ? (
               <div className="text-center py-12 text-white/30 text-sm">Loading projects…</div>
             ) : projects.length === 0 ? (
@@ -429,7 +407,6 @@ const AdminDNAManager = () => {
                 {projects.map((project, i) => (
                   <motion.div key={project.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
                     className="bg-[#111118] border border-white/5 rounded-2xl overflow-hidden">
-                    {/* Header */}
                     <div className="flex items-center gap-4 px-5 py-4">
                       <button onClick={() => setExpandedProject(expandedProject === project.id ? null : project.id)}
                         className="flex items-center gap-3 flex-1 text-left min-w-0">
@@ -451,13 +428,11 @@ const AdminDNAManager = () => {
                       </button>
                     </div>
 
-                    {/* Expanded: components */}
                     <AnimatePresence>
                       {expandedProject === project.id && (
                         <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
                           className="border-t border-white/5 overflow-hidden">
                           <div className="p-5 space-y-4">
-                            {/* Existing components */}
                             {project.components.length > 0 && (
                               <div className="space-y-2">
                                 {project.components.map(comp => (
@@ -468,16 +443,13 @@ const AdminDNAManager = () => {
                                       {comp.is_required ? "required" : "optional"}
                                     </span>
                                     <span className="text-xs text-white/40">×{comp.quantity}</span>
-                                    <button onClick={() => handleRemoveComponent(comp.id)}
-                                      className="p-1 text-white/20 hover:text-red-400 transition-colors">
+                                    <button onClick={() => handleRemoveComponent(comp.id)} className="p-1 text-white/20 hover:text-red-400 transition-colors">
                                       <X className="w-3.5 h-3.5" />
                                     </button>
                                   </div>
                                 ))}
                               </div>
                             )}
-
-                            {/* Add component form */}
                             <div className="bg-[#0B0B0F] rounded-xl p-4 space-y-3">
                               <p className="text-xs text-white/40 font-medium">Add Component</p>
                               <div className="relative">
@@ -532,7 +504,6 @@ const AdminDNAManager = () => {
             )}
           </motion.div>
         )}
-
       </AnimatePresence>
     </div>
   );

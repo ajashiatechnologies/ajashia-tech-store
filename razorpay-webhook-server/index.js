@@ -93,7 +93,7 @@ async function sendOrderConfirmationEmail({ customer, order, invoiceNumber, invo
   }
 }
 
-function generateInvoicePDF({ order, items, invoiceNumber, customer }) {
+function generateInvoicePDF({ order, items, invoiceNumber, customer, shippingCharge = 49, discountAmount = 0, couponCode = null }) {
   const invoicesDir = path.join(process.cwd(), "invoices");
   if (!fs.existsSync(invoicesDir)) {
     fs.mkdirSync(invoicesDir, { recursive: true });
@@ -106,18 +106,41 @@ function generateInvoicePDF({ order, items, invoiceNumber, customer }) {
   const normal = () => doc.font("Helvetica");
   const bold = () => doc.font("Helvetica-Bold");
 
-  /* ================= HEADER ================= */
-  const logoPath = path.join(process.cwd(), "assets/logo.png");
-  if (fs.existsSync(logoPath)) {
-    doc.image(logoPath, 50, 45, { width: 70 });
-  }
+/* ================= HEADER ================= */
 
-  bold().fontSize(18).fillColor("#000").text("Ajashia Tech Store", 130, 50);
-  normal().fontSize(10).text("Electronics & Innovation Store", 130, 72);
+const logoPath = path.join(process.cwd(), "assets/logo.png");
 
-  doc.moveTo(50, 100).lineTo(545, 100).stroke();
+// Logo (fixed size & position)
+if (fs.existsSync(logoPath)) {
+  doc.image(logoPath, 50, 45, { width: 60 }); // clean size
+}
 
-  bold().fontSize(14).text("INVOICE", 0, 115, { align: "center" });
+// Company Name
+bold()
+  .fontSize(18)
+  .fillColor("#000")
+  .text("Ajashia Tech Store", 120, 50);
+
+// Tagline
+normal()
+  .fontSize(10)
+  .fillColor("#444")
+  .text("Electronics & Innovation Store", 120, 72);
+
+// Divider line
+doc
+  .moveTo(50, 105)
+  .lineTo(545, 105)
+  .stroke();
+
+// INVOICE title (centered)
+bold()
+  .fontSize(14)
+  .fillColor("#000")
+  .text("INVOICE", 0, 120, { align: "center" });
+
+// Move cursor below header (important for next content)
+doc.y = 140;
 
   /* ================= CUSTOMER + META ================= */
   normal().fontSize(10).fillColor("#000");
@@ -200,18 +223,35 @@ function generateInvoicePDF({ order, items, invoiceNumber, customer }) {
   /* ================= TOTALS ================= */
   const totalsTop = y + 15;
 
+  // Calculate subtotal from items
+  const itemsSubtotal = items.reduce((sum, item) => {
+    const p = item.product;
+    const price = (p.offer_price !== null && p.offer_price !== undefined) ? p.offer_price : p.price;
+    return sum + price * item.quantity;
+  }, 0);
+
   bold().fontSize(10).fillColor("#000");
   doc.text("Subtotal:", 400, totalsTop);
-  normal().text(`₹${order.amount}`, 480, totalsTop);
+  normal().text(`₹${itemsSubtotal.toFixed(2)}`, 480, totalsTop);
 
-  bold().text("Shipping:", 400, totalsTop + 15);
-  normal().text("₹0.00", 480, totalsTop + 15);
+  let nextY = totalsTop + 15;
 
-  doc.moveTo(400, totalsTop + 35).lineTo(545, totalsTop + 35).stroke();
+  // Show discount if coupon was applied
+  if (discountAmount > 0) {
+    bold().fillColor("#22c55e").text("Discount" + (couponCode ? ` (${couponCode})` : "") + ":", 350, nextY);
+    normal().fillColor("#22c55e").text(`-₹${discountAmount.toFixed(2)}`, 480, nextY);
+    nextY += 15;
+  }
+
+  bold().fillColor("#000").text("Shipping:", 400, nextY);
+  normal().fillColor("#000").text(`₹${shippingCharge.toFixed(2)}`, 480, nextY);
+  nextY += 15;
+
+  doc.moveTo(400, nextY + 5).lineTo(545, nextY + 5).stroke();
 
   bold().fontSize(11);
-  doc.text("Final Total:", 400, totalsTop + 45);
-  doc.text(`₹${order.amount}`, 480, totalsTop + 45);
+  doc.text("Final Total:", 400, nextY + 15);
+  doc.text(`₹${order.amount}`, 480, nextY + 15);
 
   /* ================= TERMS ================= */
   bold().fontSize(10).text("Terms & Conditions", 50, totalsTop + 90);
@@ -244,8 +284,13 @@ const app = express();
 /* ===================== CORS ===================== */
 app.use(
   cors({
-    origin: "http://localhost:8081",
-    methods: ["GET", "POST"],
+    origin: [
+      "http://localhost",
+      "http://localhost:80",
+      "http://localhost:8081",
+      "http://localhost:5173",
+    ],
+    methods: ["GET", "POST", "DELETE"],
     allowedHeaders: ["Content-Type"],
   })
 );
@@ -281,7 +326,7 @@ const WEBHOOK_SECRET = process.env.RAZORPAY_WEBHOOK_SECRET;
    =================================================== */
 app.post("/create-razorpay-order", async (req, res) => {
   try {
-    const { amount, cart, user_id } = req.body;
+    const { amount, cart, user_id, shipping, discount, coupon_code } = req.body;
 
     if (!amount || amount <= 0) {
       return res.status(400).json({ error: "Invalid amount" });
@@ -307,6 +352,9 @@ app.post("/create-razorpay-order", async (req, res) => {
         notes: {
           cart: JSON.stringify(cart),
           user_id: user_id || null,
+          shipping: shipping || 49,
+          discount: discount || 0,
+          coupon_code: coupon_code || null,
         },
       }),
     });
@@ -404,6 +452,9 @@ app.post("/razorpay-webhook", async (req, res) => {
     }
 
     const userId = payment.notes?.user_id || null;
+    const shippingCharge = parseFloat(payment.notes?.shipping ?? 49);
+    const discountAmount = parseFloat(payment.notes?.discount || 0);
+    const couponCode = payment.notes?.coupon_code || null;
 
     /* ================= CREATE ORDER ================= */
     const { data: order, error } = await supabase
@@ -507,6 +558,9 @@ app.post("/razorpay-webhook", async (req, res) => {
       items: fullItems,
       invoiceNumber,
       customer,
+      shippingCharge,
+      discountAmount,
+      couponCode,
     });
 
     /* ================= SEND CONFIRMATION EMAIL ================= */
@@ -791,6 +845,109 @@ app.post("/coupon/validate", async (req, res) => {
   }
 
   return res.json({ code: coupon.code, discount_percent: coupon.discount_percent });
+});
+
+/* ===================================================
+   SEYAL DNA — ROUTES
+   =================================================== */
+
+// Get DNA relationships for a product
+app.get("/dna/:productId", async (req, res) => {
+  const { productId } = req.params;
+  const { data, error } = await supabase
+    .from("component_dna")
+    .select(`id, relationship_type, reason, sort_order,
+      related_product:products!component_dna_related_product_id_fkey(id,name,price,offer_price,image_url,slug,stock)`)
+    .eq("product_id", productId)
+    .order("sort_order");
+  if (error) return res.status(500).json({ error: error.message });
+  return res.json(data);
+});
+
+// Add DNA relationship
+app.post("/dna", async (req, res) => {
+  const { product_id, related_product_id, relationship_type, reason, sort_order } = req.body;
+  if (!product_id || !related_product_id || !relationship_type) {
+    return res.status(400).json({ error: "Missing required fields" });
+  }
+  const { data, error } = await supabase.from("component_dna").insert({
+    product_id, related_product_id, relationship_type,
+    reason: reason || null,
+    sort_order: sort_order || 0,
+  }).select().single();
+  if (error) {
+    if (error.code === "23505") return res.status(409).json({ error: "This relationship already exists" });
+    return res.status(500).json({ error: error.message });
+  }
+  return res.json(data);
+});
+
+// Delete DNA relationship
+app.delete("/dna/:id", async (req, res) => {
+  const { id } = req.params;
+  const { error } = await supabase.from("component_dna").delete().eq("id", id);
+  if (error) return res.status(500).json({ error: error.message });
+  return res.json({ success: true });
+});
+
+// Get all projects
+app.get("/projects", async (req, res) => {
+  const { data: projs, error } = await supabase
+    .from("product_projects").select("*").order("created_at", { ascending: false });
+  if (error) return res.status(500).json({ error: error.message });
+
+  const enriched = await Promise.all(projs.map(async (proj) => {
+    const { data: comps } = await supabase
+      .from("project_components")
+      .select(`id, is_required, quantity, product:products(id,name,image_url,price,offer_price,slug,stock)`)
+      .eq("project_id", proj.id);
+    return { ...proj, name: proj.project_name, components: comps || [] };
+  }));
+  return res.json(enriched);
+});
+
+// Create project
+app.post("/projects", async (req, res) => {
+  const { name, description, difficulty, youtube_query } = req.body;
+  if (!name || !difficulty) return res.status(400).json({ error: "Name and difficulty required" });
+  const { data, error } = await supabase.from("product_projects").insert({
+    project_name: name, description: description || null, difficulty, youtube_query: youtube_query || null,
+  }).select().single();
+  if (error) return res.status(500).json({ error: error.message });
+  return res.json(data);
+});
+
+// Delete project
+app.delete("/projects/:id", async (req, res) => {
+  const { id } = req.params;
+  const { error } = await supabase.from("product_projects").delete().eq("id", id);
+  if (error) return res.status(500).json({ error: error.message });
+  return res.json({ success: true });
+});
+
+// Add component to project
+app.post("/projects/:projectId/components", async (req, res) => {
+  const { projectId } = req.params;
+  const { product_id, is_required, quantity } = req.body;
+  if (!product_id) return res.status(400).json({ error: "product_id required" });
+  const { data, error } = await supabase.from("project_components").insert({
+    project_id: projectId, product_id,
+    is_required: is_required ?? true,
+    quantity: quantity || 1,
+  }).select().single();
+  if (error) {
+    if (error.code === "23505") return res.status(409).json({ error: "Already added to this project" });
+    return res.status(500).json({ error: error.message });
+  }
+  return res.json(data);
+});
+
+// Remove component from project
+app.delete("/projects/components/:id", async (req, res) => {
+  const { id } = req.params;
+  const { error } = await supabase.from("project_components").delete().eq("id", id);
+  if (error) return res.status(500).json({ error: error.message });
+  return res.json({ success: true });
 });
 
 /* ===================================================  */

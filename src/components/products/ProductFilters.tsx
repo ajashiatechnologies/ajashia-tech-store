@@ -4,53 +4,36 @@ import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
 import { Star } from "lucide-react";
 
-/* ================= CONSTANT CATEGORIES ================= */
-
 const CATEGORIES = [
-  { id: "arduino", label: "Arduino Boards", count: 45 },
-  { id: "sensors", label: "Sensors", count: 120 },
-  { id: "iot", label: "IoT Modules", count: 68 },
-  { id: "kits", label: "Kits & Bundles", count: 32 },
-  { id: "cables", label: "Cables & Wires", count: 89 },
-  { id: "tools", label: "Tools", count: 56 },
+  { id: "arduino", label: "Arduino Boards" },
+  { id: "sensors", label: "Sensors" },
+  { id: "iot", label: "IoT Modules" },
+  { id: "kits", label: "Kits & Bundles" },
+  { id: "cables", label: "Cables & Wires" },
+  { id: "tools", label: "Tools" },
 ];
 
 const RATINGS = [5, 4, 3, 2, 1];
 
-/* ================= PROPS ================= */
-
 interface ProductFiltersProps {
   selectedCategories: string[];
   onCategoryChange: (categories: string[]) => void;
-
   priceRange: [number, number];
   onPriceChange: (range: [number, number]) => void;
-
   selectedRating: number | null;
   onRatingChange: (rating: number | null) => void;
 }
 
-/* ================= COMPONENT ================= */
-
 export const ProductFilters = ({
-  selectedCategories,
-  onCategoryChange,
-  priceRange,
-  onPriceChange,
-  selectedRating,
-  onRatingChange,
+  selectedCategories, onCategoryChange,
+  priceRange, onPriceChange,
+  selectedRating, onRatingChange,
 }: ProductFiltersProps) => {
-  /* ================= CATEGORY HANDLER ================= */
 
   const handleCategoryToggle = (id: string, checked: boolean) => {
-    if (checked) {
-      onCategoryChange([...selectedCategories, id]);
-    } else {
-      onCategoryChange(selectedCategories.filter((c) => c !== id));
-    }
+    if (checked) onCategoryChange([...selectedCategories, id]);
+    else onCategoryChange(selectedCategories.filter((c) => c !== id));
   };
-
-  /* ================= CLEAR ALL ================= */
 
   const clearFilters = () => {
     onCategoryChange([]);
@@ -60,109 +43,61 @@ export const ProductFilters = ({
 
   return (
     <div className="space-y-8">
-      {/* ================= CATEGORIES ================= */}
+
+      {/* CATEGORIES */}
       <div>
         <h3 className="font-semibold text-foreground mb-4">Categories</h3>
-
         <div className="space-y-3">
           {CATEGORIES.map((category) => (
-            <div
-              key={category.id}
-              className="flex items-center justify-between"
-            >
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id={category.id}
-                  checked={selectedCategories.includes(category.id)}
-                  onCheckedChange={(checked) =>
-                    handleCategoryToggle(category.id, checked as boolean)
-                  }
-                />
-                <Label
-                  htmlFor={category.id}
-                  className="text-sm text-muted-foreground hover:text-foreground cursor-pointer"
-                >
-                  {category.label}
-                </Label>
-              </div>
-
-              <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
-                {category.count}
-              </span>
+            <div key={category.id} className="flex items-center space-x-2">
+              <Checkbox
+                id={category.id}
+                checked={selectedCategories.includes(category.id)}
+                onCheckedChange={(checked) => handleCategoryToggle(category.id, checked as boolean)}
+              />
+              <Label htmlFor={category.id} className="text-sm text-muted-foreground hover:text-foreground cursor-pointer">
+                {category.label}
+              </Label>
             </div>
           ))}
         </div>
       </div>
 
-      {/* ================= PRICE RANGE ================= */}
+      {/* PRICE RANGE */}
       <div>
         <h3 className="font-semibold text-foreground mb-4">Price Range</h3>
-
         <div className="px-2">
-          <Slider
-            value={priceRange}
-            onValueChange={(v) => onPriceChange(v as [number, number])}
-            max={10000}
-            step={100}
-            className="mb-4"
-          />
-
+          <Slider value={priceRange} onValueChange={(v) => onPriceChange(v as [number, number])} max={10000} step={100} className="mb-4" />
           <div className="flex items-center justify-between text-sm">
-            <span className="px-3 py-1 rounded-lg bg-muted font-medium">
-              ₹{priceRange[0]}
-            </span>
+            <span className="px-3 py-1 rounded-lg bg-muted font-medium">₹{priceRange[0]}</span>
             <span className="text-muted-foreground">to</span>
-            <span className="px-3 py-1 rounded-lg bg-muted font-medium">
-              ₹{priceRange[1]}
-            </span>
+            <span className="px-3 py-1 rounded-lg bg-muted font-medium">₹{priceRange[1]}</span>
           </div>
         </div>
       </div>
 
-      {/* ================= RATING ================= */}
+      {/* RATING */}
       <div>
         <h3 className="font-semibold text-foreground mb-4">Rating</h3>
-
         <div className="space-y-2">
           {RATINGS.map((rating) => (
-            <button
-              key={rating}
-              onClick={() =>
-                onRatingChange(
-                  selectedRating === rating ? null : rating
-                )
-              }
+            <button key={rating} onClick={() => onRatingChange(selectedRating === rating ? null : rating)}
               className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
-                selectedRating === rating
-                  ? "bg-primary/10 border border-primary/30"
-                  : "hover:bg-muted"
-              }`}
-            >
+                selectedRating === rating ? "bg-primary/10 border border-primary/30" : "hover:bg-muted"
+              }`}>
               <div className="flex items-center gap-0.5">
                 {[...Array(5)].map((_, i) => (
-                  <Star
-                    key={i}
-                    className={`w-4 h-4 ${
-                      i < rating
-                        ? "text-yellow-500 fill-yellow-500"
-                        : "text-muted-foreground"
-                    }`}
-                  />
+                  <Star key={i} className={`w-4 h-4 ${i < rating ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground"}`} />
                 ))}
               </div>
-
               <span className="text-sm text-muted-foreground">& Up</span>
             </button>
           ))}
         </div>
       </div>
 
-      {/* ================= CLEAR ================= */}
-      <Button
-        variant="outline"
-        className="w-full"
-        onClick={clearFilters}
-      >
+      {/* CLEAR */}
+      <Button variant="outline" className="w-full" onClick={clearFilters}>
         Clear All Filters
       </Button>
     </div>

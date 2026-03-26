@@ -13,13 +13,14 @@ import {
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, ShoppingCart, User, Menu, X, Heart } from "lucide-react";
+import { Search, ShoppingCart, User, Menu, X, Heart, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuthContext } from "@/context/AuthProvider";
 import { useAuth } from "@/hooks/useAuth";
 import { useCart } from "@/hooks/useCart";
 import { useProfile } from "@/hooks/useProfile";
+import logo from "../../assets/logo.png"; 
 
 const navLinks = [
   { name: "Home", path: "/" },
@@ -28,6 +29,16 @@ const navLinks = [
   { name: "About", path: "/about" },
   { name: "Contact", path: "/contact" },
 ];
+
+const SeyalNavLink = () => (
+  <Link to="/seyal"
+    className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all
+      bg-gradient-to-r from-purple-500/20 to-violet-500/20 border border-purple-500/30 text-purple-300
+      hover:from-purple-500/30 hover:to-violet-500/30 hover:border-purple-400/50">
+    <Zap className="w-3 h-3" />
+    Seyal
+  </Link>
+);
 
 export const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -70,11 +81,11 @@ export const Header = () => {
 
             {/* LOGO */}
             <Link to="/" className="flex items-center gap-2">
-              <img
-                src="razorpay-webhook-server/assets/logo.png"
-                alt="Ajashia"
-                className="h-10 w-10 object-contain rounded-xl"
-              />
+              <img src={logo} 
+              alt="Ajashia"
+                className="h-10 w-10 object-contain rounded-xl"/>
+                
+              
               <div className="flex flex-col">
                 <span className="text-lg font-bold text-foreground">Ajashia</span>
                 <span className="text-[10px] text-muted-foreground -mt-1 tracking-wider">TECH STORE</span>
@@ -155,6 +166,8 @@ export const Header = () => {
                 )
               )}
 
+              <SeyalNavLink />
+
               <Button variant="ghost" size="icon" className="lg:hidden text-white" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
                 {isMobileMenuOpen ? <X /> : <Menu />}
               </Button>
@@ -184,6 +197,12 @@ export const Header = () => {
                     </Link>
                   </motion.div>
                 ))}
+                <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: navLinks.length * 0.05 }}>
+                  <Link to="/seyal"
+                    className="flex items-center gap-2 py-3 px-4 rounded-lg text-base font-semibold bg-purple-500/10 text-purple-300 border border-purple-500/20">
+                    <Zap className="w-4 h-4" /> Seyal — Component DNA
+                  </Link>
+                </motion.div>
               </nav>
               <div className="mt-8">
                 {!loading && (

@@ -4,6 +4,7 @@ import { Mail, Phone, MapPin, Send, Instagram, Youtube } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import logo from "../../assets/logo.png"; 
 
 const BACKEND_URL = "http://localhost:4000";
 
@@ -24,6 +25,7 @@ const footerLinks = {
   ],
   company: [
     { name: "About Us", path: "/about" },
+    { name: "Seyal — Component DNA", path: "/seyal" },
     { name: "Blog", path: "/blog" },
     { name: "Careers", path: "/careers" },
     { name: "Press", path: "/press" },
@@ -106,11 +108,9 @@ export const Footer = () => {
           {/* Brand Column */}
           <div className="col-span-2 md:col-span-3 lg:col-span-2">
             <Link to="/" className="flex items-center gap-2 mb-4">
-              <img
-                src="razorpay-webhook-server/assets/logo.png"
-                alt="Ajashia"
-                className="h-10 w-10 object-contain rounded-xl"
-              />
+              <img src={logo} 
+              alt="Ajashia"
+                className="h-10 w-10 object-contain rounded-xl"/>
               <div className="flex flex-col">
                 <span className="text-lg font-bold text-foreground">Ajashia</span>
                 <span className="text-[10px] text-muted-foreground -mt-1 tracking-wider">TECH STORE</span>

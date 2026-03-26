@@ -11,6 +11,7 @@ import {
   X,
   Cpu,
   BookOpen,
+  Network,
 } from "lucide-react";
 
 const navItems = [
@@ -19,6 +20,7 @@ const navItems = [
   { to: "/admin/newsletter", label: "Newsletter", icon: Mail },
   { to: "/admin/coupons", label: "Coupons", icon: Tag },
   { to: "/admin/blog", label: "Blog", icon: BookOpen },
+  { to: "/admin/dna", label: "Seyal DNA", icon: Network },
 ];
 
 const AdminLayout = () => {
@@ -32,7 +34,6 @@ const AdminLayout = () => {
 
   return (
     <div className="min-h-screen bg-[#0B0B0F] text-white flex dark">
-      {/* Sidebar */}
       <aside
         className={`fixed inset-y-0 left-0 z-50 w-60 bg-[#0f0f17] border-r border-white/10 flex flex-col transition-transform duration-300
           ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}

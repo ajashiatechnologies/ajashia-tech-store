@@ -32,7 +32,7 @@ const Cart = () => {
 
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const discountAmount = appliedCoupon ? Math.floor((subtotal * appliedCoupon.discount_percent) / 100) : 0;
-  const shipping = cartItems.length === 0 ? 0 : SHIPPING_CHARGE;
+  const shipping = cartItems.length === 0 ? 0 : subtotal >= 499 ? 0 : SHIPPING_CHARGE;
   const grandTotal = subtotal - discountAmount + shipping;
 
   const handleApplyCoupon = async () => {
@@ -69,11 +69,18 @@ const Cart = () => {
     toast.info("Coupon removed");
   };
 
-  const createRazorpayOrder = async (amount: number, cart: any[]) => {
+  const createRazorpayOrder = async (amount: number, cart: any[], coupon: typeof appliedCoupon, discount: number) => {
     const res = await fetch(`${BACKEND_URL}/create-razorpay-order`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ amount, cart, user_id: user?.id || null }),
+      body: JSON.stringify({
+        amount,
+        cart,
+        user_id: user?.id || null,
+        shipping: shipping,
+        discount: discount,
+        coupon_code: coupon?.code || null,
+      }),
     });
     if (!res.ok) throw new Error("Failed to create Razorpay order");
     return await res.json();
@@ -87,7 +94,7 @@ const Cart = () => {
     }
 
     try {
-      const order = await createRazorpayOrder(grandTotal, cartItems);
+      const order = await createRazorpayOrder(grandTotal, cartItems, appliedCoupon, discountAmount);
       const loaded = await loadRazorpay();
       if (!loaded) {
         alert("Razorpay SDK failed to load");
@@ -257,8 +264,16 @@ const Cart = () => {
 
                     <div className="flex justify-between text-muted-foreground">
                       <span>Delivery</span>
-                      <span>₹{SHIPPING_CHARGE}</span>
+                      <span className={shipping === 0 ? "text-green-400 font-medium" : ""}>
+                        {shipping === 0 ? "Free" : `₹${SHIPPING_CHARGE}`}
+                      </span>
                     </div>
+                    {shipping === 0 && subtotal > 0 && (
+                      <p className="text-xs text-green-400/70">🎉 You qualify for free delivery!</p>
+                    )}
+                    {shipping > 0 && (
+                      <p className="text-xs text-muted-foreground/60">Add ₹{(499 - subtotal).toFixed(0)} more for free delivery</p>
+                    )}
 
                     <div className="flex justify-between text-lg font-bold pt-3 border-t border-border">
                       <span>Total</span>

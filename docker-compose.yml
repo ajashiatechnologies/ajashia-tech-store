@@ -1,0 +1,25 @@
+services:
+  backend:
+    build:
+      context: ./razorpay-webhook-server
+      dockerfile: Dockerfile.backend
+    container_name: ajashia-backend
+    ports:
+      - "4000:4000"
+    env_file:
+      - ./razorpay-webhook-server/.env
+    volumes:
+      - ./razorpay-webhook-server/invoices:/app/invoices
+      - ./razorpay-webhook-server/assets:/app/assets
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: ajashia-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped

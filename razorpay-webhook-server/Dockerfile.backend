@@ -1,0 +1,21 @@
+# ── Backend Dockerfile ──────────────────────────────────
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Install dependencies
+COPY package*.json ./
+RUN npm install --production
+
+# Copy all files
+COPY . .
+
+# 🔥 FORCE COPY assets separately (IMPORTANT)
+COPY assets ./assets
+
+# Create invoices folder
+RUN mkdir -p invoices
+
+EXPOSE 4000
+
+CMD ["node", "index.js"]

@@ -30,14 +30,14 @@ const COUNTRY_CODES = [
 
 /* Preset avatars */
 const PRESET_AVATARS = [
-  "src/assets/avatars/avatar-1.png",
-  "src/assets/avatars/avatar-2.png",
-  "src/assets/avatars/avatar-3.png",
-  "src/assets/avatars/avatar-4.png",
-  "src/assets/avatars/avatar-5.png",
-  "src/assets/avatars/avatar-6.png",
-  "src/assets/avatars/avatar-7.png",
-  "src/assets/avatars/avatar-8.png",
+  "/avatars/avatar-1.png",
+  "/avatars/avatar-2.png",
+  "/avatars/avatar-3.png",
+  "/avatars/avatar-4.png",
+  "/avatars/avatar-5.png",
+  "/avatars/avatar-6.png",
+  "/avatars/avatar-7.png",
+  "/avatars/avatar-8.png",
 ];
 
 const STATUS_STEPS = ["placed", "packed", "shipped", "delivered"];

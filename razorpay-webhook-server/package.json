@@ -17,6 +17,7 @@
     "express": "^5.2.1",
     "fs": "^0.0.1-security",
     "node-fetch": "^3.3.2",
+    "nodemailer": "^8.0.4",
     "pdfkit": "^0.17.2",
     "uuid": "^13.0.0"
   }

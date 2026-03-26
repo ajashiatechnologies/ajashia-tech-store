@@ -1,6 +1,8 @@
+import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import OrderSuccess from "@/pages/OrderSuccess";
+
+/* ================= CORE (KEEP NORMAL) ================= */
 
 import AppLayout from "./components/layout/AppLayout";
 import AdminLayout from "./components/layout/AdminLayout";
@@ -12,46 +14,52 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 
 import { WishlistProvider } from "@/hooks/useWishlist";
 import { CartProvider } from "@/hooks/useCart";
-import AdminBlog from "./pages/admin/AdminBlog";
 
-/* ================= PAGES ================= */
+/* ================= HOME (KEEP NORMAL) ================= */
 
 import Index from "./pages/Index";
-import Products from "./pages/Products";
-import ProductDetail from "./pages/ProductDetail";
-import Cart from "./pages/Cart";
-import Wishlist from "./pages/Wishlist";
-import About from "./pages/About";
-import Contact from "./pages/Contact";
-import CategoriesPage from "./pages/CategoriesPage";
-import Profile from "./pages/Profile";
-import AdminNewsletter from "./pages/admin/AdminnewsLetter";
-import AdminCoupons from "./pages/admin/Admincoupons";  
-import SeyalPage from "./pages/Seyalpage";
-import AdminDNAManager from "./pages/admin/Admindnamanager";
+
+/* ================= LAZY LOADED PAGES ================= */
+
+const Products = lazy(() => import("./pages/Products"));
+const ProductDetail = lazy(() => import("./pages/ProductDetail"));
+const Cart = lazy(() => import("./pages/Cart"));
+const Wishlist = lazy(() => import("./pages/Wishlist"));
+const About = lazy(() => import("./pages/About"));
+const Contact = lazy(() => import("./pages/Contact"));
+const CategoriesPage = lazy(() => import("./pages/CategoriesPage"));
+const Profile = lazy(() => import("./pages/Profile"));
+const OrderSuccess = lazy(() => import("./pages/OrderSuccess"));
+const SeyalPage = lazy(() => import("./pages/Seyalpage"));
+
 /* ================= FOOTER PAGES ================= */
 
-import ShippingInfo from "@/pages/ShippingInfo";
-import ReturnsRefunds from "@/pages/ReturnsRefunds";
-import TrackOrder from "@/pages/TrackOrder";
-import FAQPage from "@/pages/FAQPage";
-import Careers from "@/pages/Careers";
-import Blog from "@/pages/Blog";
-import Press from "@/pages/Press";
-import PrivacyPolicy from "@/pages/PrivacyPolicy";
-import TermsOfService from "@/pages/TermsOfService";
-import CookiePolicy from "@/pages/CookiePolicy";
+const ShippingInfo = lazy(() => import("./pages/ShippingInfo"));
+const ReturnsRefunds = lazy(() => import("./pages/ReturnsRefunds"));
+const TrackOrder = lazy(() => import("./pages/TrackOrder"));
+const FAQPage = lazy(() => import("./pages/FAQPage"));
+const Careers = lazy(() => import("./pages/Careers"));
+const Blog = lazy(() => import("./pages/Blog"));
+const Press = lazy(() => import("./pages/Press"));
+const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
+const TermsOfService = lazy(() => import("./pages/TermsOfService"));
+const CookiePolicy = lazy(() => import("./pages/CookiePolicy"));
 
 /* ================= AUTH ================= */
 
-import SignIn from "./pages/auth/SignIn";
-import SignUp from "./pages/auth/SignUp";
-import NotFound from "./pages/NotFound";
+const SignIn = lazy(() => import("./pages/auth/SignIn"));
+const SignUp = lazy(() => import("./pages/auth/SignUp"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 
 /* ================= ADMIN ================= */
 
-import AdminDashboard from "./pages/admin/AdminDashboard";
-import AdminProducts from "./pages/admin/AdminProducts";
+const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
+const AdminProducts = lazy(() => import("./pages/admin/AdminProducts"));
+const AdminNewsletter = lazy(() => import("./pages/admin/AdminnewsLetter"));
+const AdminCoupons = lazy(() => import("./pages/admin/Admincoupons"));
+const AdminDNAManager = lazy(() => import("./pages/admin/Admindnamanager"));
+const AdminBlog = lazy(() => import("./pages/admin/AdminBlog"));
+
 
 /* ================= QUERY CLIENT ================= */
 
@@ -69,6 +77,7 @@ const App = () => {
             <Sonner />
 
             <BrowserRouter>
+              <Suspense fallback={<div>Loading...</div>}>
               <Routes>
                 {/* 🔒 Auth Routes */}
                 <Route path="/auth/sign-in" element={<SignIn />} />
@@ -127,6 +136,7 @@ const App = () => {
                 {/* ❌ 404 */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
+              </Suspense>
             </BrowserRouter>
           </TooltipProvider>
         </WishlistProvider>
