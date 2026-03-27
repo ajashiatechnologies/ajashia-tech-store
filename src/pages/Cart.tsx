@@ -18,7 +18,7 @@ import {
 import { useCart } from "@/hooks/useCart";
 import { toast } from "sonner";
 
-const BACKEND_URL = "http://localhost:4000";
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 const SHIPPING_CHARGE = 49;
 
 const Cart = () => {
