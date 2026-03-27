@@ -9,7 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-const BACKEND_URL = "http://localhost:4000";
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 type Product = { id: string; name: string; image_url: string; price: number; };
 type DnaRow  = { id: string; related_product: Product; relationship_type: string; reason: string; sort_order: number; };

@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Send, Users, UserCheck, UserMinus, Eye, EyeOff, Mail } from "lucide-react";
 
-const BACKEND_URL = "http://localhost:4000";
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 type Stats = { total: number; active: number; unsubscribed: number };
 
 const defaultHtml = (subject: string, body: string) => `
@@ -17,13 +17,13 @@ const defaultHtml = (subject: string, body: string) => `
     </div>
     <div>
       <div style="font-weight: 700; font-size: 16px;">Ajashia Tech Store</div>
-      <div style="font-size: 11px; color: #64748b;">ajashiatechnologies.com</div>
+      <div style="font-size: 11px; color: #64748b;">ajashiatechstore.in</div>
     </div>
   </div>
   <h2 style="color: #813FF1; margin-top: 0; font-size: 22px;">${subject}</h2>
   <div style="color: #94a3b8; line-height: 1.8; white-space: pre-line;">${body}</div>
   <div style="margin-top: 28px;">
-    <a href="https://ajashiatechnologies.com/products" style="background: #813FF1; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px;">
+    <a href="https://ajashiatechstore.in/products" style="background: #813FF1; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px;">
       Shop Now →
     </a>
   </div>

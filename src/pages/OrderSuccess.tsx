@@ -245,7 +245,7 @@ const OrderSuccess = () => {
             className="w-full flex items-center justify-center gap-2"
             onClick={() => {
               if (!order?.id) return;
-              const invoiceUrl = `http://localhost:4000/download-invoice/${order.id}`;
+              const invoiceUrl = `${import.meta.env.VITE_BACKEND_URL}/download-invoice/${order.id}`;
               window.open(invoiceUrl, "_blank");
             }}
           >

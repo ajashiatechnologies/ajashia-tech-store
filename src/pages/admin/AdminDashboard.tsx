@@ -239,7 +239,7 @@ const AdminDashboard = () => {
                       variant="outline"
                       onClick={() =>
                         window.open(
-                          `http://localhost:4000/download-invoice/${order.id}`,
+                          `${import.meta.env.VITE_BACKEND_URL}/download-invoice/${order.id}`,
                           "_blank"
                         )
                       }

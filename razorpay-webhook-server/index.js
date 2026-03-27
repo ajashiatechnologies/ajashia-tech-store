@@ -74,7 +74,7 @@ async function sendOrderConfirmationEmail({ customer, order, invoiceNumber, invo
 
           <p style="margin-top: 24px; font-size: 13px; color: #999;">
             — Ajashia Tech Store<br/>
-            <a href="http://localhost:8081" style="color: #813FF1;">ajashiatechstore.com</a>
+            <a href="https://ajashiatechstore.in" style="color: #813FF1;">ajashiatechstore.in</a>
           </p>
         </div>
       `,
