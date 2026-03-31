@@ -18,6 +18,8 @@ import { CartProvider } from "@/hooks/useCart";
 /* ================= HOME (KEEP NORMAL) ================= */
 
 import Index from "./pages/Index";
+import UpdatePassword from "./pages/auth/update-password";
+import ForgotPassword from "./pages/auth/forgot-password";
 
 /* ================= LAZY LOADED PAGES ================= */
 
@@ -82,6 +84,8 @@ const App = () => {
                 {/* 🔒 Auth Routes */}
                 <Route path="/auth/sign-in" element={<SignIn />} />
                 <Route path="/auth/sign-up" element={<SignUp />} />
+                <Route path="/auth/forgot-password" element={<ForgotPassword />} />
+                <Route path="/auth/update-password" element={<UpdatePassword />} />
                 <Route path="/seyal" element={<SeyalPage />} />
 
                 {/* 🌐 User Layout */}

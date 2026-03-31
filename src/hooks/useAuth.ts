@@ -17,6 +17,12 @@ export const useAuth = () => {
   }
   };
 
+  const resetPassword = async (email: string) => {
+  return await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: "https://ajashiatechstore.in/auth/update-password",
+  });
+};
+
 const signInWithGoogle = async () => {
   const { error } = await supabase.auth.signInWithOAuth({
     provider: "google",

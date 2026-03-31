@@ -285,13 +285,13 @@ const app = express();
 app.use(
   cors({
     origin: [
-      "http://localhost",
-      "http://localhost:80",
-      "http://localhost:8081",
-      "http://localhost:5173",
+      "http://ajashiatechstore.in",
+      "http://www.ajashiatechstore.in",
+      "http://13.204.42.39"
     ],
     methods: ["GET", "POST", "DELETE"],
     allowedHeaders: ["Content-Type"],
+    credentials: true
   })
 );
 

@@ -19,7 +19,13 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 
 const signUpSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
+  name: z
+  .string()
+  .trim()
+  .min(2, "Name must be at least 2 characters")
+  .refine((val) => val.replace(/\s/g, "").length > 0, {
+    message: "Name cannot be empty or spaces only",
+  }),
   email: z.string().email("Please enter a valid email"),
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
@@ -68,18 +74,24 @@ const SignUp = () => {
       return;
     }
 
-    setIsLoading(true);
-    const { error } = await signUp(name, email, password);
-    setIsLoading(false);
+setIsLoading(true);
+const { error } = await signUp(name, email, password);
 
-    if (error) {
-      toast.error(typeof error === "string" ? error : (error as any).message || "Sign up failed");
-    } else {
-      toast.success(
-        "Account created successfully! Please check your email to verify your account."
-      );
-      navigate("/auth/sign-in");
-    }
+setIsLoading(false);
+
+if (error) {
+  const errorMessage = typeof error === "string" ? error : (error as any).message || "Sign up failed";
+  if (errorMessage.includes("User already registered")) {
+    toast.error("Email already registered. Please sign in.");
+  } else {
+    toast.error(errorMessage);
+  }
+} else {
+  toast.success(
+    "Account created successfully! Please check your email to verify your account."
+  );
+  navigate("/auth/sign-in");
+}
   };
 
   // ✅ Google Sign-Up handler (ONLY ADDITION)
@@ -183,7 +195,7 @@ const SignUp = () => {
                 <Input
                   type="text"
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={(e) => setName(e.target.value.replace(/\s{2,}/g, " "))}
                   placeholder="John Doe"
                   className={`pl-12 text-white placeholder:text-white/60 ${
                     errors.name ? "border-destructive" : ""
